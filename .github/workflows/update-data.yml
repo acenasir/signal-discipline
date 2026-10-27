@@ -1,0 +1,36 @@
+name: Update market data
+
+on:
+  schedule:
+    # Every 10 minutes, 13:00–21:59 UTC on weekdays (covers the NY session in EDT and EST).
+    # GitHub may delay scheduled runs by several minutes.
+    - cron: "*/10 13-21 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/fetch-data.mjs
+      - name: Commit data if it changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "No data changes."
+          else
+            git commit -m "Update NQ market data"
+            git push
+          fi

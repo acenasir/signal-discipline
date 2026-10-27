@@ -108,6 +108,41 @@ h2{font-size:clamp(26px,4vw,38px);letter-spacing:-.03em;line-height:1.15;margin-
 .grade{margin-top:20px;font-size:16px}
 .grade b{font-family:"JetBrains Mono",monospace}
 
+/* Live + backtest */
+.status{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);margin-bottom:18px}
+.status b{color:var(--text);font-weight:600}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--buy);margin-right:6px;vertical-align:middle}
+.dot.stale{background:var(--wait)}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.kv div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px}
+.kv span{display:block;font-size:12px;color:var(--muted)}
+.kv b{font-family:"JetBrains Mono",monospace;font-size:17px;font-weight:600}
+.checks li.off b{color:var(--muted)}
+.checks li.off{color:var(--muted)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px}
+.ctl{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.ctl label{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;font-weight:600;cursor:pointer}
+.ctl small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.ctl input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.ctl input[type=number],.ctl select{width:84px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:500 14px "JetBrains Mono",monospace}
+.ctl select{width:auto}
+.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:860px){.tiles{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.tiles{grid-template-columns:repeat(2,1fr)}.kv{grid-template-columns:1fr 1fr}}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.tile span{display:block;font-size:12px;color:var(--muted)}
+.tile b{font-family:"JetBrains Mono",monospace;font-size:20px;font-weight:600}
+.pos{color:var(--buy)} .neg{color:var(--sell)}
+.equity{width:100%;height:180px;display:block}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th,.tbl td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl th{color:var(--muted);font-weight:500}
+.tbl td{font-family:"JetBrains Mono",monospace}
+.scroll{overflow-x:auto}
+.stack{display:grid;gap:18px}
+h3.h{font-size:16px;margin-bottom:12px}
+
 footer{padding:40px 0 60px;color:var(--muted);font-size:13px}
 footer p+p{margin-top:8px}
 </style>
@@ -121,9 +156,10 @@ footer p+p{margin-top:8px}
       Signal Discipline
     </div>
     <ul>
-      <li><a href="#engine">Signal engine</a></li>
+      <li><a href="#live">Live</a></li>
+      <li><a href="#engine">Checklist</a></li>
+      <li><a href="#backtest">Backtest</a></li>
       <li><a href="#rules">Rules</a></li>
-      <li><a href="#backtests">Backtests</a></li>
       <li><a href="#review">Execution review</a></li>
     </ul>
   </div>
@@ -145,9 +181,41 @@ footer p+p{margin-top:8px}
   </div>
 </header>
 
+<section id="live">
+  <div class="wrap">
+    <h2>Live NQ signal: 15m ORB + FVG</h2>
+    <p class="sub">The same rules as the backtest, applied to today's session on delayed NQ futures data. It updates about every 10 minutes during market hours.</p>
+    <div class="status" id="liveStatus"><span>Loading market data…</span></div>
+    <div class="engine">
+      <div class="card">
+        <div class="kv">
+          <div><span>Last price</span><b id="lvPrice">–</b></div>
+          <div><span>Opening range high</span><b id="lvOrH">–</b></div>
+          <div><span>Opening range low</span><b id="lvOrL">–</b></div>
+        </div>
+        <h3 class="h">Today's checklist (<span id="lvDate">–</span>)</h3>
+        <ul class="checks" id="lvChecks"><li><b>·</b>Waiting for data</li></ul>
+        <div id="lvPlan" class="kv" style="margin-top:18px;display:none">
+          <div><span>Entry</span><b id="lvEntry">–</b></div>
+          <div><span>Stop</span><b id="lvStop">–</b></div>
+          <div><span>Target</span><b id="lvTarget">–</b></div>
+        </div>
+      </div>
+      <aside class="card out">
+        <div class="signal wait" id="lvSignal">
+          <div class="lbl">NQ · today</div>
+          <div class="big" id="lvBig">■ NO TRADE</div>
+          <div class="why" id="lvWhy">Loading…</div>
+        </div>
+        <p class="score" style="margin-top:14px;display:block">Uses the filter settings from the Backtest section below. Data is delayed and can lag the real market.</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
 <section id="engine">
   <div class="wrap">
-    <h2>Signal engine</h2>
+    <h2>Manual checklist</h2>
     <p class="sub">Answer each question from your chart. The signal only fires when every condition lines up in the same direction. Anything less is a pass.</p>
 
     <div class="tabs" role="tablist">
@@ -169,6 +237,43 @@ footer p+p{margin-top:8px}
         <button class="reset" type="button" id="reset">Reset checklist</button>
       </aside>
     </div>
+  </div>
+</section>
+
+<section id="backtest">
+  <div class="wrap">
+    <h2>Backtest on real NQ data</h2>
+    <p class="sub">Every session in the data is replayed with your rules: one trade a day at most, on the first 15m close outside the opening range. Turn filters on and off to see which conditions actually carry the edge.</p>
+
+    <div class="controls" id="btControls">
+      <div class="ctl"><label>Data <select id="pData"><option value="5m">5m bars</option><option value="1m">1m bars</option></select></label><small id="dataInfo">FVGs are found on this timeframe.</small></div>
+      <div class="ctl"><label>Directional bias <input type="checkbox" id="pBias" checked></label><small>Range above the prior close for longs, below it for shorts</small></div>
+      <div class="ctl"><label>Displacement <input type="checkbox" id="pDisp" checked></label><small>Breakout body ≥ <input type="number" id="pDispBody" value="50" min="0" max="100" step="5" style="width:58px">% of its range</small></div>
+      <div class="ctl"><label>FVG entry <input type="checkbox" id="pFvg" checked></label><small>Limit at the FVG edge, stop past the gap. Off: market entry, stop at range midpoint</small></div>
+      <div class="ctl"><label>Chop filter <input type="checkbox" id="pTrend" checked></label><small>Efficiency ≥ <input type="number" id="pEff" value="0.25" min="0" max="1" step="0.05" style="width:64px"> (net move ÷ path)</small></div>
+      <div class="ctl"><label>Draw on liquidity <input type="checkbox" id="pDol" checked></label><small>Target the prior day high/low, ≥ <input type="number" id="pMinR" value="1" min="0" step="0.5" style="width:58px">R away</small></div>
+      <div class="ctl"><label>Fixed target (R) <input type="number" id="pRR" value="2" min="0.5" step="0.5"></label><small>Used when draw on liquidity is off</small></div>
+      <div class="ctl"><label>Contract <select id="pPv"><option value="20">NQ ($20/pt)</option><option value="2">MNQ ($2/pt)</option></select></label><small>Fees $<input type="number" id="pFee" value="4.5" min="0" step="0.5" style="width:58px"> round trip · 0.25pt slippage per side</small></div>
+    </div>
+
+    <div class="tiles" id="tiles"></div>
+
+    <div class="stack">
+      <div class="card">
+        <h3 class="h">Equity curve</h3>
+        <svg class="equity" id="equity" viewBox="0 0 600 180" preserveAspectRatio="none" aria-label="Equity curve"></svg>
+      </div>
+      <div class="card">
+        <h3 class="h">Which conditions carry the edge?</h3>
+        <p class="score" style="display:block;margin-bottom:12px">Same data and settings, with each filter tested on its own against taking every breakout.</p>
+        <div class="scroll"><table class="tbl" id="impact"></table></div>
+      </div>
+      <div class="card">
+        <h3 class="h">Trades</h3>
+        <div class="scroll"><table class="tbl" id="trades"></table></div>
+      </div>
+    </div>
+    <p class="note">Hypothetical results on delayed Yahoo Finance NQ=F continuous-futures bars, regular hours only. Fills are simulated: when a bar touches both the stop and the target, it counts as a loss. Small samples swing a lot, so treat these numbers as a check on the rules, not a forecast.</p>
   </div>
 </section>
 
@@ -207,7 +312,7 @@ footer p+p{margin-top:8px}
 
 <section id="backtests">
   <div class="wrap">
-    <h2>Same market, different results</h2>
+    <h2>TradeZella backtests: same market, different results</h2>
     <p class="sub">Two NQ 15-minute ORB backtests run through TradeZella's automated backtesting. The variation being tested decided the outcome.</p>
     <div class="bt">
       <div class="card">
@@ -363,5 +468,6 @@ document.querySelectorAll("#sc button").forEach(b => b.addEventListener("click",
 
 render();
 </script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
